@@ -23,7 +23,7 @@
 ##'             trajectories.}
 ##'     }
 ##'
-##' @author Mike Grundler
+##' @author Mike Grundler (R code), Emmanuel Paradis (C code)
 ##'
 ##' @seealso \code{\link{getRateThroughTimeMatrix}}
 ##'
