@@ -6,14 +6,8 @@
 #	phylogenetic tree
 
 getStartStopTimes <- function(phy){
- 	if (is.ultrametric(phy)) {
-	 	bmax <- max(branching.times(phy));
-		bt <- bmax - branching.times(phy);
-		begin <- bt[as.character(phy$edge[,1])];
-		end <- begin + phy$edge.length;
-		phy$begin <- as.numeric(begin);
-		phy$end <- as.numeric(end);
-		return(phy);
-	}
-	return( NU.branching.times(phy, "begin.end"));
+	res <- .Call('get_startstoptimes', phy$edge, phy$edge.length, Ntip(phy))
+    phy$begin <- res[[1]][phy$edge[,2]]
+    phy$end <- res[[2]][phy$edge[,2]]
+    return(phy)
 }

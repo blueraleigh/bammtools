@@ -6,12 +6,16 @@
 
 getRecursiveSequence = function(phy)
 {
-	rootnd = as.integer(phy$Nnode+2);
-	anc = as.integer(phy$edge[,1]);
-	desc = as.integer(phy$edge[,2]);
-	ne = as.integer(dim(phy$edge)[1]);
-	L = .C('setrecursivesequence', anc, desc, rootnd, ne, integer(ne+1),integer(ne+1));
-	phy$downseq = as.integer(L[[5]]);
-	phy$lastvisit = as.integer(L[[6]]);
-	return(phy);
+    L <- .C('get_recursivesequence', 
+        phy$edge[,1], 
+        phy$edge[,2], 
+        Ntip(phy)+1L, 
+        0, 
+        nrow(phy$edge), 
+        integer(2*Ntip(phy)-1), 
+        integer(2*Ntip(phy)-1)
+    )
+    phy$downseq <- L[[6]]
+    phy$lastvisit <- L[[7]]
+	return(phy)
 }
