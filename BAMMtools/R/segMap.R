@@ -2,49 +2,51 @@
 #	Internal function called by dtRates(...)
 #
 #
-segMap <- function(ephy, tau) {
-	# tolerance for determining if segments fail to tesselate branch
-	tol <- 0.0001
-	tH <- max(ephy$end)
-	# size to discretize branches into
-	tau <- tH * tau
-	# vector to track remainders when segments don't tesselate branch
-	remainder <- numeric(max(ephy$edge[,1]))
-	dtsegs <- vector("list", nrow(ephy$edge))
+segMap = function(ephy, tau) {
+	tol <- 0.0001;
+#	tH <- max(branching.times(as.phylo.bammdata(ephy)));
+	tH <- max(ephy$end);
+	remainder <- numeric(max(ephy$edge[,1]));
+	dtsegs <- vector("list",nrow(ephy$edge));
 	for (i in 1:nrow(ephy$edge)) {
 		if (remainder[ephy$edge[i,1]] > 0) {
-			if (ephy$begin[i] + remainder[ephy$edge[i,1]] > ephy$end[i]) {
-				remainder[ephy$edge[i,2]] <- (ephy$begin[i] + remainder[ephy$edge[i,1]]) - ephy$end[i]
-				segs <- ephy$begin[i]
+			if (ephy$begin[i]/tH+remainder[ephy$edge[i,1]] > ephy$end[i]/tH) {
+				remainder[ephy$edge[i,2]] <- ephy$begin[i]/tH + remainder[ephy$edge[i,1]] - ephy$end[i]/tH;
+				segs <- ephy$begin[i]/tH;
 			}
 			else {
-				segs <- seq(ephy$begin[i] + remainder[ephy$edge[i,1]], ephy$end[i], tau)
-				segs <- c(ephy$begin[i], segs)
+				segs <- seq(ephy$begin[i]/tH+remainder[ephy$edge[i,1]], ephy$end[i]/tH, tau);
+				segs <- c(ephy$begin[i]/tH,segs);
 			}
 		}
 		else {
-			segs <- seq(ephy$begin[i], ephy$end[i], tau)
+			segs <- seq(ephy$begin[i]/tH, ephy$end[i]/tH, tau);
 		}
 		if (length(segs) > 1) {
-			if (ephy$end[i] - tail(segs,1) > tol) {
-				remainder[ephy$edge[i,2]] <- tau - (ephy$end[i] - tail(segs,1))
-				segs <- c(segs, ephy$end[i])
+			if (ephy$end[i]/tH - tail(segs,1) > tol) {
+				remainder[ephy$edge[i,2]] <- tau - (ephy$end[i]/tH-tail(segs,1));
+				segs <- c(segs,ephy$end[i]/tH);
 			}
 			segs <- cbind(segs[-length(segs)], segs[-1])
 			segs <- cbind(rep(ephy$edge[i,2], nrow(segs)), segs)
+#			segs <- rep(segs,each=2);
+#			segs <- segs[-c(1,length(segs))];
+#			segs <- matrix(segs,ncol=2,byrow=TRUE);
+#			segs <- cbind(rep(ephy$edge[i,2],nrow(segs)), segs);
 		}
 		else {
 			if (remainder[ephy$edge[i,1]] == 0) {
-				remainder[ephy$edge[i,2]] <- tau - (ephy$end[i] - tail(segs,1))
+				remainder[ephy$edge[i,2]] <- tau - (ephy$end[i]/tH-tail(segs,1));
 			}
-			segs <- matrix(c(ephy$edge[i,2], ephy$begin[i], ephy$end[i]), nrow=1, ncol=3) 
+			segs <- matrix(c(ephy$edge[i,2], ephy$begin[i]/tH, ephy$end[i]/tH),nrow=1,ncol=3); 
 		}
-		dtsegs[[i]] <- segs
+		dtsegs[[i]] <- segs;
 	}
-	dtsegs <- do.call(rbind,dtsegs)
-	return(dtsegs)
+	dtsegs <- do.call(rbind,dtsegs);
+	dtsegs[,2] <- dtsegs[,2]*tH;
+	dtsegs[,3] <- dtsegs[,3]*tH;
+	return(dtsegs);	
 }
-
 
 
 # segMap = function(nodes,begin,end,tau)
