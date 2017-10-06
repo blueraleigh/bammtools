@@ -85,7 +85,7 @@
 ##' plot(sc, ed)
 ##' @export
 plot.bammshifts <- function(x, ephy, method="phylogram", pal="RdYlBu", 
-rank=NULL, index=NULL, spex="s", legend=TRUE, add.freq.text=TRUE, logcolor=FALSE, breaksmethod="linear", color.interval=NULL, JenksSubset=20000, ...) 
+rank=NULL, index=NULL, spex=NULL, legend=TRUE, add.freq.text=TRUE, logcolor=FALSE, breaksmethod="linear", color.interval=NULL, JenksSubset=20000, ...) 
 {
 	if (class(x) != "bammshifts") {
 		stop("arg sc must be of class 'bammshifts'");
@@ -93,13 +93,7 @@ rank=NULL, index=NULL, spex="s", legend=TRUE, add.freq.text=TRUE, logcolor=FALSE
 	if (class(ephy) != "bammdata") {
 		stop("arg ephy must be of class 'bammdata'");
 	}
-	if (!spex %in% c('s', 'e', 'netdiv')) {
-		stop("arg spex must be 's', 'e' or 'netdiv'.")
-	}
-	if ((spex == "e" || spex == "netdiv") && ephy$type == "trait") {
-		warning("arg spex not meaningful for BAMMtrait");
-		spex <- "s";
-	}
+
 	if (is.null(rank) && is.null(index)) {
 		rank <- sample.int(length(x$shifts),1);
 		index <- x$samplesets[[rank]][sample.int(length(x$samplesets[[rank]]),1)];
@@ -136,7 +130,7 @@ rank=NULL, index=NULL, spex="s", legend=TRUE, add.freq.text=TRUE, logcolor=FALSE
 	}
 	
 	ephy <- dtRates(ephy,0.01);
-	colorbreaks <- assignColorBreaks(ephy$dtrates$rates, spex=spex, logcolor=logcolor, method=breaksmethod, JenksSubset=JenksSubset);
+	colorbreaks <- .bamm.colors.boilerplate(ephy, spex=spex, logcolor=logcolor, method=breaksmethod, JenksSubset=JenksSubset)$colorbreaks
 	sed <- subsetEventData(ephy, index);
 	plot.bammdata(sed, method=method, pal=pal, spex=spex, colorbreaks=colorbreaks, par.reset=par.reset, ...);
 
@@ -153,25 +147,26 @@ rank=NULL, index=NULL, spex="s", legend=TRUE, add.freq.text=TRUE, logcolor=FALSE
     }
     isShiftNode <- match(shiftnodes, sed$eventData[[1]]$node);
     time <- sed$eventData[[1]][isShiftNode, 2] - sed$eventData[[1]][isShiftNodeParent, 2];
-    if (spex == "s") {
-    	lam1 <- sed$eventData[[1]][isShiftNodeParent, 3]; 
-    	lam2 <- sed$eventData[[1]][isShiftNodeParent, 4];
-        AcDc <- exponentialRate(time, lam1, lam2) > sed$eventData[[1]][isShiftNode, 3];	
-    }
-    else if (spex == "e") {
-    	mu1 <- sed$eventData[[1]][isShiftNodeParent, 5]; 
-    	mu2 <- sed$eventData[[1]][isShiftNodeParent, 6];
-    	AcDc <- exponentialRate(time, mu1, mu2) > sed$eventData[[1]][isShiftNode, 5];
-    }
-    else if (spex == 'netdiv') {
-    	lam1 <- sed$eventData[[1]][isShiftNodeParent, 3]; 
-    	lam2 <- sed$eventData[[1]][isShiftNodeParent, 4];
-    	mu1 <- sed$eventData[[1]][isShiftNodeParent, 5]; 
-    	mu2 <- sed$eventData[[1]][isShiftNodeParent, 6];
-    	AcDc <- (exponentialRate(time, lam1, lam2)-exponentialRate(time, mu1, mu2)) > (sed$eventData[[1]][isShiftNode, 3]-sed$eventData[[1]][isShiftNode, 5]);
-    }
-    bg <- rep("blue", length(AcDc));
-    bg[which(AcDc == FALSE)] <- "red";
+#    if (spex == "s") {
+#    	lam1 <- sed$eventData[[1]][isShiftNodeParent, 3]; 
+#    	lam2 <- sed$eventData[[1]][isShiftNodeParent, 4];
+#        AcDc <- exponentialRate(time, lam1, lam2) > sed$eventData[[1]][isShiftNode, 3];	
+#    }
+#    else if (spex == "e") {
+#    	mu1 <- sed$eventData[[1]][isShiftNodeParent, 5]; 
+#    	mu2 <- sed$eventData[[1]][isShiftNodeParent, 6];
+#    	AcDc <- exponentialRate(time, mu1, mu2) > sed$eventData[[1]][isShiftNode, 5];
+#    }
+#    else if (spex == 'netdiv') {
+#    	lam1 <- sed$eventData[[1]][isShiftNodeParent, 3]; 
+#    	lam2 <- sed$eventData[[1]][isShiftNodeParent, 4];
+#    	mu1 <- sed$eventData[[1]][isShiftNodeParent, 5]; 
+#    	mu2 <- sed$eventData[[1]][isShiftNodeParent, 6];
+#    	AcDc <- (exponentialRate(time, lam1, lam2)-exponentialRate(time, mu1, mu2)) > (sed$eventData[[1]][isShiftNode, 3]-sed$eventData[[1]][isShiftNode, 5]);
+#    }
+#    bg <- rep("blue", length(AcDc));
+#    bg[which(AcDc == FALSE)] <- "red";
+    bg <- rep('black', length(shiftnodes));
 	cex <- 0.75 + 5 * x$marg.probs[as.character(getShiftNodesFromIndex(ephy, index))];
 	addBAMMshifts(sed, 1, method, cex=cex, bg=transparentColor(bg, 0.5),par.reset=par.reset);
 	if (add.freq.text) {

@@ -72,3 +72,79 @@ richColors <- function (n) {
     return(gplots::rich.colors(n))
 }
 
+.bamm.colors.boilerplate <- function(
+    x, 
+    pal = 'RdYlBu',
+    colorbreaks = NULL, 
+    spex = NULL,
+    logcolor = FALSE, 
+    breaksmethod = c("linear","quantile","jenks"),
+    color.interval = NULL,
+    JenksSubset = NULL)
+{
+    breaksmethod <- match.arg(breaksmethod)   
+    if (inherits(x, "bammdata-trait") || x$type == "trait") {
+        if (is.null(colorbreaks)) {
+            colorbreaks <- assignColorBreaks(x$dtrates$rates, 64, logcolor, breaksmethod, JenksSubset);
+        }
+        colormap <- colorMap(x$dtrates$rates, pal, colorbreaks, logcolor, color.interval)
+        return(list(colormap=colormap, colorbreaks=colorbreaks))
+    } else if (inherits(x, "bammdata-diversification") || x$type == "diversification") {
+        if (is.null(spex)) {
+            if (is.null(colorbreaks)) {
+                colorbreaks <- assignColorBreaks(x$dtrates$rates[[1]], 64, logcolor, breaksmethod, JenksSubset);
+            }
+            colormap <- colorMap(x$dtrates$rates[[1]], pal, colorbreaks, logcolor, color.interval)
+            return(list(colormap=colormap, colorbreaks=colorbreaks))
+        } else if (tolower(spex) == "s") {
+            if (is.null(colorbreaks)) {
+                colorbreaks <- assignColorBreaks(x$dtrates$rates[[1]], 64, logcolor, breaksmethod, JenksSubset);
+            }
+            colormap <- colorMap(x$dtrates$rates[[1]], pal, colorbreaks, logcolor, color.interval)
+            return(list(colormap=colormap, colorbreaks=colorbreaks))
+        } else if (tolower(spex) == "e") {
+            if (is.null(colorbreaks)) {
+                colorbreaks <- assignColorBreaks(x$dtrates$rates[[2]], 64, logcolor, breaksmethod, JenksSubset);
+            }
+            colormap <- colorMap(x$dtrates$rates[[2]], pal, colorbreaks, logcolor, color.interval)
+            return(list(colormap=colormap, colorbreaks=colorbreaks))
+        } else if (tolower(spex) == "netdiv") {
+            if (is.null(colorbreaks)) {
+                colorbreaks <- assignColorBreaks(x$dtrates$rates[[1]] - x$dtrates$rates[[2]], 64, logcolor, breaksmethod, JenksSubset);
+            }
+            colormap <- colorMap(x$dtrates$rates[[1]] - x$dtrates$rates[[2]], pal, colorbreaks, logcolor, color.interval)
+            return(list(colormap=colormap, colorbreaks=colorbreaks))
+        }
+    } else if (inherits(x, "bammdata-binarystate") || x$type == "binarystate") {
+        if (is.null(spex)) {
+            if (is.null(colorbreaks)) {
+                colorbreaks <- assignColorBreaks(x$dtrates$rates[[1]], 64, logcolor, breaksmethod, JenksSubset);
+            }
+            colormap <- colorMap(x$dtrates$rates[[1]], pal, colorbreaks, logcolor, color.interval)
+            return(list(colormap=colormap, colorbreaks=colorbreaks))
+        } else if (tolower(spex) == "f") {
+            if (is.null(colorbreaks)) {
+                colorbreaks <- assignColorBreaks(x$dtrates$rates[[1]], 64, logcolor, breaksmethod, JenksSubset);
+            }
+            colormap <- colorMap(x$dtrates$rates[[1]], pal, colorbreaks, logcolor, color.interval)
+            return(list(colormap=colormap, colorbreaks=colorbreaks))
+        }
+        else if (tolower(spex) == "r") {
+            if (is.null(colorbreaks)) {
+                colorbreaks <- assignColorBreaks(x$dtrates$rates[[2]], 64, logcolor, breaksmethod, JenksSubset);
+            }
+            colormap <- colorMap(x$dtrates$rates[[2]], pal, colorbreaks, logcolor, color.interval)
+            return(list(colormap=colormap, colorbreaks=colorbreaks))
+        } else if (tolower(spex) == "o") {
+            w <- 2 * x$dtrates$rates[[1]] * x$dtrates$rates[[2]] / (x$dtrates$rates[[1]] + x$dtrates$rates[[2]])
+            if (is.null(colorbreaks)) {
+                colorbreaks <- assignColorBreaks(w, 64, logcolor, breaksmethod, JenksSubset);
+            }
+            colormap <- colorMap(w, pal, colorbreaks, logcolor, color.interval)
+            return(list(colormap=colormap, colorbreaks=colorbreaks))
+        }
+    } else {
+        stop("Unrecognized/corrupt bammdata class. Type does not equal 'trait' or 'diversification' or 'binarystate'"); 
+    }
+    return(NULL)
+}

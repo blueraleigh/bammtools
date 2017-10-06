@@ -48,9 +48,12 @@ redirect <- function(coord, theta) {
 ##'     interpreting the mapping of evolutionary rates to colors. Defaults to
 ##'     \code{FALSE}.
 ##' @param spex A character string indicating what type of macroevolutionary
-##'     rates should be plotted. "s" (default) indicates speciation rates, "e"
-##'     indicates extinction rates, and "netdiv" indicates net diversification
-##'     rates. Ignored if \code{ephy$type = "trait"}.  	
+##'     rates should be plotted. For speciation/extinction bamm, "s" (default) 
+##'     indicates speciation rates, "e" indicates extinction rates, and "netdiv" 
+##'     indicates net diversification rates. For binary state bamm, "f" (default) indicates 
+##'     forward transition rate, "r" indicates reverse transition rate, and "o" 
+##'     indicates mean transition rate regardless of state. The parameter is ignored 
+##'     if \code{ephy$type = "trait"}.  	
 ##' @param lwd A numeric specifying the line width for branches.
 ##' @param cex A numeric specifying the size of tip labels.
 ##' @param pal A character string or vector of mode character that describes
@@ -254,17 +257,38 @@ redirect <- function(coord, theta) {
 ##' plot(ed,method="polar",pal="RdYlBu", lwd=3)}
 ##' @keywords models graphics
 ##' @export
-plot.bammdata <- function (x, tau = 0.01, method = "phylogram", xlim = NULL, ylim = NULL, vtheta = 5, rbf = 0.001, show = TRUE, labels = FALSE, legend = FALSE, spex = "s", lwd = 1, cex = 1, pal = "RdYlBu", mask = integer(0), mask.color = gray(0.5), colorbreaks = NULL, logcolor = FALSE, breaksmethod = "linear", color.interval = NULL, JenksSubset = 20000, par.reset = FALSE, direction = "rightwards", ...) {
+plot.bammdata <- function(
+    x, 
+    tau = 0.01, 
+    method = "phylogram", 
+    xlim = NULL, 
+    ylim = NULL, 
+    vtheta = 5, 
+    rbf = 0.001, 
+    show = TRUE, 
+    labels = FALSE, 
+    legend = FALSE, 
+    spex = NULL, 
+    lwd = 1, 
+    cex = 1, 
+    pal = "RdYlBu", 
+    mask = integer(0), 
+    mask.color = gray(0.5), 
+    colorbreaks = NULL, 
+    logcolor = FALSE, 
+    breaksmethod = "linear", 
+    color.interval = NULL, 
+    JenksSubset = 20000, 
+    par.reset = FALSE, 
+    direction = "rightwards", ...) 
+{
     if ("bammdata" %in% class(x)) {
     	if (attributes(x)$order != "cladewise") {
     		stop("Function requires tree in 'cladewise' order");
     	}
         phy <- as.phylo.bammdata(x);
-    }
-    else stop("Object ephy must be of class bammdata");
-    
-    if (!spex %in% c('s','e','netdiv')) {
-    	stop("spex must be 's', 'e' or 'netdiv'.");
+    } else {
+        stop("Object ephy must be of class bammdata")
     }
     
     if (length(pal) == 1 && !pal %in% names(get("palettes", envir=.colorEnv)) && pal != "temperature" && pal != "terrain")
@@ -281,53 +305,37 @@ plot.bammdata <- function (x, tau = 0.01, method = "phylogram", xlim = NULL, yli
     if (!is.binary.tree(phy)) {
         stop("Function requires fully bifurcating tree");
     }
+    
     if (any(phy$edge.length == 0)) {
         warning("Tree contains zero length branches. Rates for these will be NA and coerced to zero");
     }
+    
     if (!("dtrates" %in% names(x))) {
         x <- dtRates(x, tau);
     }
-    if (is.null(colorbreaks)) {
-   	    colorbreaks <- assignColorBreaks(x$dtrates$rates, 64, spex, logcolor, breaksmethod, JenksSubset);
+    
+    colorobj <- .bamm.colors.boilerplate(x, pal, colorbreaks, spex, logcolor, breaksmethod, color.interval, JenksSubset)
+    edge.color <- colorobj$colormap$cols
+    if (is.null(edge.color)) {
+        stop("Make sure the 'spex' parameter is appropriate for the type of bamm analysis.")
     }
-    if (x$type == "trait") {
-    	colorobj <- colorMap(x$dtrates$rates, pal, colorbreaks, logcolor, color.interval);
-    }
-    else if (x$type == "diversification") {
-        if (tolower(spex) == "s") {
-            colorobj <- colorMap(x$dtrates$rates[[1]], pal, colorbreaks, logcolor, color.interval);
-        }
-        else if (tolower(spex) == "e") {
-            colorobj <- colorMap(x$dtrates$rates[[2]], pal, colorbreaks, logcolor, color.interval);
-        }
-        else if (tolower(spex) == "netdiv") {
-            colorobj <- colorMap(x$dtrates$rates[[1]] - x$dtrates$rates[[2]], pal, colorbreaks, logcolor, color.interval);
-        }
-    }
-    else {
-   	    stop("Unrecognized/corrupt bammdata class. Type does not equal 'trait' or 'diversification'");	
-    }
-    edge.color <- colorobj$cols;
-#    if (is.ultrametric(phy))    
-#    	tH <- max(branching.times(phy))
-#    else
-#    	tH <- max(NU.branching.times(phy));
+
 	tH <- max(x$end);
     phy$begin <- x$begin;
     phy$end <- x$end;
     tau <- x$dtrates$tau;
+
     if (method == "polar") {
         ret <- setPolarTreeCoords(phy, vtheta, rbf);
         rb <- tH * rbf;
         p <- mkdtsegsPolar(ret$segs[-1,], tau, x$edge);
-    }
-    else if (method == "phylogram") {
+    } else if (method == "phylogram") {
         ret <- setPhyloTreeCoords(phy);
         p <- mkdtsegsPhylo(ret$segs[-1,], tau, x$edge);
-    }
-    else {
+    } else {
         stop("Unimplemented method");
     }
+
     x0 <- c(ret$segs[1,1], p[, 1]);
     x1 <- c(ret$segs[1,3], p[, 2]);
     y0 <- c(ret$segs[1,2], p[, 3]);
@@ -356,7 +364,11 @@ plot.bammdata <- function (x, tau = 0.01, method = "phylogram", xlim = NULL, yli
         		ofs <- max(nchar(phy$tip.label) * 0.03 * cex);
         }
         if (method == "polar") {
-            plot.window(xlim = c(-1, 1) + c(-rb, rb) + c(-ofs, ofs), ylim = c(-1, 1) + c(-rb, rb) + c(-ofs, ofs), asp = 1);
+            if (is.null(xlim) && is.null(ylim)) {
+                xlim = c(-1, 1) + c(-rb, rb) + c(-ofs, ofs)
+                ylim = xlim
+            }
+            plot.window(xlim = xlim, ylim = ylim, asp = 1);
             segments(x0, y0, x1, y1, col = edge.color, lwd = lwd, lend = 2);
             arc(0, 0, ret$arcs[, 1], ret$arcs[, 2], c(rb, rb + phy$end/tH), border = arc.color, lwd = lwd);
             if (labels) {

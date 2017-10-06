@@ -61,18 +61,12 @@
 ##' cset <- credibleShiftSet(ed, expectedNumberOfShifts = 1, threshold = 5)
 ##' plot(cset)
 ##' @export
-plot.credibleshiftset <- function(x, plotmax=9, method='phylogram', pal = 'RdYlBu', shiftColor = 'black', spex = "s", add.freq.text = TRUE, use.plot.bammdata = TRUE, border = TRUE, legend = FALSE, send2pdf = FALSE, logcolor=FALSE, breaksmethod='linear', color.interval=NULL, JenksSubset=20000, ...)
+plot.credibleshiftset <- function(x, plotmax=9, method='phylogram', pal = 'RdYlBu', shiftColor = 'black', spex = NULL, add.freq.text = TRUE, use.plot.bammdata = TRUE, border = TRUE, legend = FALSE, send2pdf = FALSE, logcolor=FALSE, breaksmethod='linear', color.interval=NULL, JenksSubset=20000, ...)
 {
 	if (class(x) != "credibleshiftset") {
 		stop('arg x must be of class "credibleshiftset"');
 	}
-	if (!spex %in% c('s', 'e', 'netdiv')) {
-		stop("arg spex must be 's', 'e' or 'netdiv'. ")
-	}
-	if ((spex == "e" || spex == "se") && x$type == "trait") {
-		warning("arg spex not meaningful for BAMMtrait");
-		spex <- "s";
-	}
+
 	cset.bamm <- as.bammdata(x);
 	if (plotmax > 9 && send2pdf == FALSE) {
 	    plotmax <- 9;
@@ -121,8 +115,8 @@ plot.credibleshiftset <- function(x, plotmax=9, method='phylogram', pal = 'RdYlB
 	cat("Omitted", max(x$number.distinct,mm) - min(x$number.distinct,mm), "plots\n");
 	if (use.plot.bammdata) {
     	cset.bamm <- dtRates(cset.bamm, 0.01);
-	    colorbreaks <- assignColorBreaks(cset.bamm$dtrates$rates,spex=spex, logcolor=logcolor, method=breaksmethod, JenksSubset=JenksSubset);
-	}
+	    colorbreaks <- .bamm.colors.boilerplate(cset.bamm, spex=spex, logcolor=logcolor, breaksmethod=breaksmethod, JenksSubset=JenksSubset)$colorbreaks
+    }
 	for (i in 1:mm) {
 	    sed <- subsetEventData(cset.bamm, index=x$indices[[i]]);
 		par(mar = c(2,2,2,2));
