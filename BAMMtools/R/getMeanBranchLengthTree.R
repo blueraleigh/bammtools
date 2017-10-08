@@ -1,4 +1,4 @@
-getMeanBranchLengthTree = function(ed, tau=0.01, rate=NULL) {
+getMeanBranchLengthTree = function(ed, tau=0.01, rate='speciation') {
     ed = dtRates(ed, tau=tau, tmat=TRUE)
     obj = list()
     obj$phy = as.phylo(ed)
@@ -15,17 +15,7 @@ getMeanBranchLengthTree = function(ed, tau=0.01, rate=NULL) {
         } else {
             stop("Unrecognized rate type")
         },
-        binarystate =
-        if (rate == 'f') {
-            tapply(ed$dtrates$rates[[1]], ed$dtrates$tmat[,1], mean)[as.character(ed$edge[,2])]
-        } else if (rate == 'r') {
-            tapply(ed$dtrates$rates[[2]], ed$dtrates$tmat[,1], mean)[as.character(ed$edge[,2])]
-        } else if (rate == 'm') {
-            tmp = (2 * ed$dtrates$rates[[1]] * ed$dtrates$rates[[2]]) / (ed$dtrates$rates[[1]] + ed$dtrates$rates[[2]])
-            tapply(tmp, ed$dtrates$tmat[,1], mean)[as.character(ed$edge[,2])] * ed$edge.length
-        } else {
-            stop("Unrecognized rate type")
-        }
+        binarystate = tapply(ed$dtrates$rates[[1]], ed$dtrates$tmat[,1], mean)[as.character(ed$edge[,2])]
     )
 
     obj$phy$edge.length = r8ts
