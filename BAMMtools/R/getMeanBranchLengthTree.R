@@ -15,7 +15,7 @@ getMeanBranchLengthTree = function(ed, tau=0.01, rate='speciation') {
         } else {
             stop("Unrecognized rate type")
         },
-        binarystate = tapply(ed$dtrates$rates[[1]], ed$dtrates$tmat[,1], mean)[as.character(ed$edge[,2])]
+        binarystate = tapply(ed$dtrates$rates[[1]], ed$dtrates$tmat[,1], mean)[as.character(ed$edge[,2])] * ed$edge.length
     )
 
     obj$phy$edge.length = r8ts
